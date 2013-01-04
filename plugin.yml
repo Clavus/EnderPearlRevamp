@@ -1,0 +1,11 @@
+name: EnderPearlRevamp
+
+main: clavus.enderpearlrevamp.EnderPearlRevamp
+
+version: 0.1
+
+commands:
+   epr:
+      description: Controls EnderPearlRevamp
+      usage: |
+           /<command> reload - reloads plugin config

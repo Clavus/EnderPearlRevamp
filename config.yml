@@ -1,0 +1,9 @@
+# Delay before teleporation after pearl hits block. Set to 0 for instant teleport.
+teleportDelay: 3
+
+# Whether the player starts spinning in the time before teleportation.
+teleportTwister: true
+
+# Whether spinning before teleport can cause you to drop shit from your inventory randomly.
+dropShitWhileSpinning: true
+dropChancePer10thSecond: 0.1
