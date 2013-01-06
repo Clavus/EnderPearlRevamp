@@ -2,18 +2,25 @@ package clavus.enderpearlrevamp;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 public class EnderPearlRevamp extends JavaPlugin
 {
@@ -24,6 +31,8 @@ public class EnderPearlRevamp extends JavaPlugin
 	private FileConfiguration config;
 	private FileConfiguration playerData;
 	private File playerDataFile;
+	
+	private HashMap<Player, PlayerPearlNetwork> pearlNetwork = new HashMap<Player, PlayerPearlNetwork>();
 	
 	public Logger log;
 	
@@ -78,16 +87,64 @@ public class EnderPearlRevamp extends JavaPlugin
 	
 	//// Player pearl handling ////
 	
-	public void playerMarkBlock(Player pl, int blockId, byte metaData)
+	public PlayerPearlNetwork getPN(Player pl)
 	{
-		
+		PlayerPearlNetwork pn = pearlNetwork.get(pl);
+		if (pn == null) {
+			pn = new PlayerPearlNetwork();
+			pearlNetwork.put(pl, pn);
+		}
+		return pn;
 	}
 	
-	public void playerInitTeleportTo(Player pl, int blockId, byte metaData)
+	public void playerMarkBlock(Player pl, Block block)
 	{
+		PlayerPearlNetwork pn = getPN(pl);
 		
+		if (!MarkerMetaData.isMarkable(block.getType())) {
+			sendMessageTo(pl, "Cannot mark this spot...");
+			return;
+		}
+		
+		pn.setMarkerLocation(block);
+		sendMessageTo(pl, "Marked block " + getBlockName(block));
 	}
 	
+	public void playerInitTeleportTo(Player pl, Block block)
+	{
+		PlayerPearlNetwork pn = getPN(pl);
+		
+		if (!MarkerMetaData.isMarkable(block.getType())) {
+			sendMessageTo(pl, "Ender Pearl did not hit a solid block...");
+			return;
+		}
+		
+		Location loc = pn.getMarkerLocation(new BlockMarker(block));
+		if (loc == null) {
+			sendMessageTo(pl, "No marked spot for " + getBlockName(block));
+			return;
+		}
+		
+		Block desBlock = loc.getBlock();
+		if (!MarkerMetaData.isSameMarkerBlock(block, desBlock)) {
+			sendMessageTo(pl, "The marked " + getBlockName(block) + " was removed!" );
+			return;
+		}
+		
+		//pl.playEffect(pl.getLocation(), Effect.SMOKE, 4);
+		pl.teleport(desBlock.getRelative(BlockFace.UP).getLocation().add(new Vector(0.5, 0, 0.5)));
+		sendMessageTo(pl, "Teleporting to " + getBlockName(block) + "...");
+	}
+	
+	//// Helpers ////
+	
+	private String getBlockName(Block bl)
+	{
+		ItemStack stack = new ItemStack(bl.getType(), 1, (short)0);
+		stack.setData(new MaterialData(bl.getType(), bl.getData()));
+		return stack.hasItemMeta() ? stack.getItemMeta().getDisplayName() : 
+			MarkerMetaData.getMetaDataPrefix(bl.getType(), bl.getData()) + stack.getType().name().replace("_", " ").toLowerCase();
+	}
 	
 	//// Config stuff ////
 	

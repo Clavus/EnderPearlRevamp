@@ -1,5 +1,7 @@
 package clavus.enderpearlrevamp;
 
+import java.util.HashMap;
+
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -17,12 +19,14 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.MaterialData;
 import org.bukkit.util.Vector;
 
 public class EnderPearlRevampListener implements Listener
 {
 	private EnderPearlRevamp plugin;
+	
+	private HashMap<Player, Long> plTime = new HashMap<Player, Long>();
+	private long interactCooldown = 500; // in milliseconds
 	
 	public EnderPearlRevampListener(EnderPearlRevamp plugin)
 	{
@@ -38,25 +42,24 @@ public class EnderPearlRevampListener implements Listener
 		if (item.getType() == Material.ENDER_PEARL)
 		{
 			if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
-				BlockFace face = e.getBlockFace();
-				Block bl = e.getClickedBlock();
 				
-				if (!bl.getType().isBlock()) {
-					plugin.sendMessageTo(pl, "Cannot mark this spot...");
-				}
-				else if (face == BlockFace.UP) {
-					ItemStack stack = new ItemStack(bl.getType(), 1, (short)0);
-					stack.setData(new MaterialData(bl.getType(), bl.getData()));
+				if (!plTime.containsKey(pl) || System.currentTimeMillis() - plTime.get(pl) > interactCooldown) { // prevent spam
+					plTime.put(pl, System.currentTimeMillis());
 					
-					plugin.print("Player marked block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
-					plugin.sendMessageTo(pl, "Marked block " + stack.toString());
-					plugin.playerMarkBlock(pl, bl.getTypeId(), bl.getData());
-				}
-				else {
-					plugin.sendMessageTo(pl, "Hit the top face of a block to mark it!");
+					BlockFace face = e.getBlockFace();
+					Block bl = e.getClickedBlock();
+					
+					if (face == BlockFace.UP) {
+						plugin.print("Player interacted with block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
+						plugin.playerMarkBlock(pl, bl);
+					}
+					else {
+						plugin.sendMessageTo(pl, "Hit the top face of a block to mark it!");
+					}
 				}
 			}
 		}
+	
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
@@ -80,15 +83,14 @@ public class EnderPearlRevampListener implements Listener
             Block bl = loc.getBlock();
             int i = 0;
             
-            while(bl.getType() == Material.AIR && i < 15) {
+            while(!bl.getType().isSolid() && i < 15) {
             	Location blockLoc = new Location(loc.getWorld(), loc.getX()+(vec.getX()*0.1*i), loc.getY()+(vec.getY()*0.1*i), loc.getZ()+(vec.getZ()*0.1*i));
             	bl = blockLoc.getBlock();
             	i++;
             }
             
             plugin.print("EnderPearl hit block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
-            plugin.sendMessageTo((Player) shooter, "Hit block " + bl.toString());
-            plugin.playerInitTeleportTo((Player) shooter, bl.getTypeId(), bl.getData());
+            plugin.playerInitTeleportTo((Player) shooter, bl);
 		}
 		
 	}

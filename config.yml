@@ -4,3 +4,4 @@ teleportPlayerDamageFraction: 0.25
 dropShitWhileSpinning: true
 dropChancePer10thSecond: 0.1
 removeMarkAfterTeleport: true
+teleportRequireFreeSpot: false
