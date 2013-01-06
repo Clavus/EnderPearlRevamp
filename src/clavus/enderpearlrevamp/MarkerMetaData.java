@@ -2,21 +2,28 @@ package clavus.enderpearlrevamp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 
 public class MarkerMetaData
 {
-	private static ArrayList<Material> allowedData = new ArrayList<Material>(Arrays.asList(Material.WOOL, Material.LOG));
-	private static ArrayList<String> woolPrefixes = new ArrayList<String>(
-			Arrays.asList("white", "orange", "magenta", "light blue", "yellow", "lime", "pink", "gray", "light gray", "cyan",
-					"purple", "blue", "brown", "green", "red", "black"));
-	private static ArrayList<String> logPrefixes = new ArrayList<String>(
-			Arrays.asList("oak", "spruce", "birch", "jungle"));
+	private static HashMap<Material, ArrayList<String>> allowedData;
+	private static ArrayList<Material> notMarkable = new ArrayList<Material>(Arrays.asList(Material.AIR, Material.PISTON_EXTENSION));
 	
-	private static ArrayList<Material> notMarkable = new ArrayList<Material>(Arrays.asList(Material.AIR));
-	
+	static {
+		allowedData = new HashMap<Material, ArrayList<String>>();
+		allowedData.put(Material.WOOL, new ArrayList<String>(
+				Arrays.asList("white", "orange", "magenta", "light blue", "yellow", "lime", "pink", "gray", "light gray", "cyan",
+						"purple", "blue", "brown", "green", "red", "black")));
+		allowedData.put(Material.LOG, new ArrayList<String>(
+				Arrays.asList("oak", "spruce", "birch", "jungle")));
+		allowedData.put(Material.SANDSTONE, new ArrayList<String>(
+				Arrays.asList("", "chiseled", "smooth")));
+		allowedData.put(Material.SMOOTH_BRICK, new ArrayList<String>(
+				Arrays.asList("", "mossy", "cracked", "chiseled")));
+	}
 	
 	public static byte getUsableMetaData(int matId, byte metaData)
 	{
@@ -25,7 +32,7 @@ public class MarkerMetaData
 	
 	public static byte getUsableMetaData(Material mat, byte metaData)
 	{	
-		if (allowedData.contains(mat)) {
+		if (allowedData.containsKey(mat)) {
 			if (mat == Material.LOG) {
 				metaData = (byte) ((int) metaData % 4);
 			}
@@ -42,15 +49,11 @@ public class MarkerMetaData
 	
 	public static String getMetaDataPrefix(Material mat, byte metaData)
 	{
-		if (allowedData.contains(mat)) {
+		if (allowedData.containsKey(mat)) {
 			metaData = getUsableMetaData(mat, metaData);
-			if (mat == Material.WOOL) {
-				return woolPrefixes.get(metaData) + " ";
-			} 
-			else if (mat == Material.LOG) {
-				return logPrefixes.get(metaData) + " ";
-			}
-			return "";
+			String res = allowedData.get(mat).get(metaData);
+			if (res == null || res == "") { return ""; }
+			else { return res + " "; }
 		}
 		
 		return "";

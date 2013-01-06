@@ -7,6 +7,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -14,8 +16,12 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.craftbukkit.v1_4_6.CraftWorld;
+import org.bukkit.craftbukkit.v1_4_6.entity.CraftFirework;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
@@ -25,7 +31,7 @@ import org.bukkit.util.Vector;
 public class EnderPearlRevamp extends JavaPlugin
 {
 	private EnderPearlRevampListener epListener = new EnderPearlRevampListener(this);
-	private String chatTag = ChatColor.AQUA + "~ ";
+	private String chatTag = ChatColor.AQUA + "o ";
 	private String consoleTag = "[EPR] ";
 	
 	private FileConfiguration config;
@@ -34,7 +40,8 @@ public class EnderPearlRevamp extends JavaPlugin
 	
 	private HashMap<Player, PlayerPearlNetwork> pearlNetwork = new HashMap<Player, PlayerPearlNetwork>();
 	
-	public Logger log;
+	private boolean craftBukkitUpToDate = true;
+	private Logger log;
 	
 	public EnderPearlRevamp()
 	{
@@ -47,11 +54,15 @@ public class EnderPearlRevamp extends JavaPlugin
 		loadConfig();
 		loadPlayerData();
 		
+		Settings.parseConfig(log, config);
+		
 		PluginManager pm = this.getServer().getPluginManager();
 		pm.registerEvents(epListener, this);
 		
 		PluginDescriptionFile pdfFile = this.getDescription();
 		print(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");
+		
+		craftBukkitUpToDate = checkClass("org.bukkit.craftbukkit.v1_4_6.CraftWorld");
 	}
 	
 	public void onDisable() 
@@ -67,7 +78,12 @@ public class EnderPearlRevamp extends JavaPlugin
 			pl = (Player) sender;
 		}
 		
-		if (cmd.getName().equalsIgnoreCase("erp")) {
+		if (pl != null && !pl.isOp()) {
+			sendMessageTo(pl, "Ops only ;)");
+			return true;
+		}
+		
+		if (cmd.getName().equalsIgnoreCase("epr")) {
 			
 			if (args.length <= 0) { 
 				sendMessageTo(pl, cmd.getUsage());
@@ -77,7 +93,11 @@ public class EnderPearlRevamp extends JavaPlugin
 			String action = args[0];
 			
 			if (action.equalsIgnoreCase("reload")) {
-								
+				reloadConfig();
+				config = getConfig();
+				Settings.parseConfig(log, config);
+				sendMessageTo(pl, "Config reloaded!");
+				return true;
 			}
 		
 		}
@@ -127,7 +147,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		
 		Block desBlock = loc.getBlock();
 		if (!MarkerMetaData.isSameMarkerBlock(block, desBlock)) {
-			sendMessageTo(pl, "The marked " + getBlockName(block) + " was removed!" );
+			sendMessageTo(pl, "Your marked " + getBlockName(block) + " was destroyed!" );
 			return;
 		}
 		
@@ -155,15 +175,35 @@ public class EnderPearlRevamp extends JavaPlugin
 		telLoc.setPitch(pl.getLocation().getPitch());
 		telLoc.setYaw(pl.getLocation().getYaw());
 		
-		//pl.playEffect(pl.getLocation(), Effect.SMOKE, 4);
+		//pl.getWorld().playEffect(pl.getLocation(), Effect.SMOKE, 4);
+		if (craftBukkitUpToDate) {
+			Firework fw = pl.getWorld().spawn(pl.getLocation(), Firework.class);
+			FireworkMeta fwm = fw.getFireworkMeta();
+			FireworkEffect effect = FireworkEffect.builder().withColor(Color.AQUA).with(FireworkEffect.Type.BALL).build();
+			fwm.addEffects(effect);
+			fwm.setPower(0);
+			fw.setFireworkMeta(fwm);
+			
+			// Firework effect
+			((CraftWorld) pl.getWorld()).getHandle().broadcastEntityEffect(
+	                ((CraftFirework) fw).getHandle(), (byte)17);
+			
+			fw.remove();
+		}
+		
 		pl.teleport(telLoc.add(new Vector(0.5, 0, 0.5)));
 		
 		if (Settings.teleportPlayerDamageFraction > 0) {
-			float damage = pl.getMaxHealth() * Settings.teleportPlayerDamageFraction;
+			double damage = pl.getMaxHealth() * Settings.teleportPlayerDamageFraction;
 			pl.damage((int) Math.ceil(damage));
 		}
 		
 		sendMessageTo(pl, "Teleporting to " + getBlockName(block) + "...");
+	}
+	
+	public void playerTeleport()
+	{
+		
 	}
 	
 	//// Helpers ////
@@ -208,6 +248,19 @@ public class EnderPearlRevamp extends JavaPlugin
 	    } catch (IOException ex) {
 	        scream("Could not save player data!", ex);
 	    }
+	}
+	
+	//// Error checking ////
+	
+	public boolean checkClass(String path)
+	{
+		try {
+			Class.forName( path );
+			return true;
+		} catch( ClassNotFoundException e ) {
+			scream(ChatColor.RED + "Class " + path + " does not exist! Make sure plugin is compiled with server version of CraftBukkit");
+			return false;
+		}
 	}
 	
 	//// Messaging and print stuff ////

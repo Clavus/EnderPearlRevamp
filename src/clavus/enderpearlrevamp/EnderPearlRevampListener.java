@@ -50,11 +50,11 @@ public class EnderPearlRevampListener implements Listener
 					Block bl = e.getClickedBlock();
 					
 					if (face == BlockFace.UP) {
-						plugin.print("Player interacted with block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
+						//plugin.print("Player interacted with block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
 						plugin.playerMarkBlock(pl, bl);
 					}
 					else {
-						plugin.sendMessageTo(pl, "Hit the top face of a block to mark it!");
+						plugin.sendMessageTo(pl, "Touch the top side of the block to mark it!");
 					}
 				}
 			}
@@ -89,7 +89,7 @@ public class EnderPearlRevampListener implements Listener
             	i++;
             }
             
-            plugin.print("EnderPearl hit block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
+            //plugin.print("EnderPearl hit block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
             plugin.playerInitTeleportTo((Player) shooter, bl);
 		}
 		
