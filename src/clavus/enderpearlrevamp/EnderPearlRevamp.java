@@ -76,6 +76,21 @@ public class EnderPearlRevamp extends JavaPlugin
 		return false;
 	}
 	
+	//// Player pearl handling ////
+	
+	public void playerMarkBlock(Player pl, int blockId, byte metaData)
+	{
+		
+	}
+	
+	public void playerInitTeleportTo(Player pl, int blockId, byte metaData)
+	{
+		
+	}
+	
+	
+	//// Config stuff ////
+	
 	private void loadConfig()
 	{
 		config = this.getConfig();
@@ -107,6 +122,8 @@ public class EnderPearlRevamp extends JavaPlugin
 	        scream("Could not save player data!", ex);
 	    }
 	}
+	
+	//// Messaging and print stuff ////
 	
 	public void sendMessageTo(Player pl, String msg)
 	{
