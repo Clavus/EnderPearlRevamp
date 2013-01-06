@@ -131,8 +131,38 @@ public class EnderPearlRevamp extends JavaPlugin
 			return;
 		}
 		
+		boolean free = true;
+		
+		// Check if free
+		desBlock = desBlock.getRelative(BlockFace.UP);
+		if (desBlock == null) {
+			free = false;
+		}
+		else if (Settings.teleportRequireFreeSpot) {
+			if (desBlock.getType().isSolid()) { free = false; }
+			else {
+				Block topBlock = desBlock.getRelative(BlockFace.UP);
+				free = (topBlock != null && !topBlock.getType().isSolid());
+			}
+		}
+		
+		if (!free) {
+			sendMessageTo(pl, "The marked " + getBlockName(block) + " location does not have space!");
+			return;
+		}
+		
+		Location telLoc = desBlock.getRelative(BlockFace.UP).getLocation();
+		telLoc.setPitch(pl.getLocation().getPitch());
+		telLoc.setYaw(pl.getLocation().getYaw());
+		
 		//pl.playEffect(pl.getLocation(), Effect.SMOKE, 4);
-		pl.teleport(desBlock.getRelative(BlockFace.UP).getLocation().add(new Vector(0.5, 0, 0.5)));
+		pl.teleport(telLoc.add(new Vector(0.5, 0, 0.5)));
+		
+		if (Settings.teleportPlayerDamageFraction > 0) {
+			float damage = pl.getMaxHealth() * Settings.teleportPlayerDamageFraction;
+			pl.damage((int) Math.ceil(damage));
+		}
+		
 		sendMessageTo(pl, "Teleporting to " + getBlockName(block) + "...");
 	}
 	

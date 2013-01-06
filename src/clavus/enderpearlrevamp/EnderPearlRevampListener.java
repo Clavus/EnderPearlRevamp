@@ -39,7 +39,7 @@ public class EnderPearlRevampListener implements Listener
 		ItemStack item = e.getItem();
 		Player pl = e.getPlayer();
 		
-		if (item.getType() == Material.ENDER_PEARL)
+		if (item != null && item.getType() == Material.ENDER_PEARL)
 		{
 			if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
 				
