@@ -1,4 +1,4 @@
-teleportDelay: 3
+teleportDelay: 2.5
 teleportTwister: true
 teleportPlayerDamageFraction: 0.25
 dropShitWhileSpinning: true

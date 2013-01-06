@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
+import org.bukkit.Effect;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -28,6 +29,8 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
+import clavus.enderpearlrevamp.runnable.ParamRunnable;
+
 public class EnderPearlRevamp extends JavaPlugin
 {
 	private EnderPearlRevampListener epListener = new EnderPearlRevampListener(this);
@@ -39,6 +42,7 @@ public class EnderPearlRevamp extends JavaPlugin
 	private File playerDataFile;
 	
 	private HashMap<Player, PlayerPearlNetwork> pearlNetwork = new HashMap<Player, PlayerPearlNetwork>();
+	private HashMap<Player, Integer> twisterTasks = new HashMap<Player, Integer>();
 	
 	private boolean craftBukkitUpToDate = true;
 	private Logger log;
@@ -107,6 +111,8 @@ public class EnderPearlRevamp extends JavaPlugin
 	
 	//// Player pearl handling ////
 	
+	// I really oughta clean this up a bit but whatever
+	
 	public PlayerPearlNetwork getPN(Player pl)
 	{
 		PlayerPearlNetwork pn = pearlNetwork.get(pl);
@@ -126,58 +132,159 @@ public class EnderPearlRevamp extends JavaPlugin
 			return;
 		}
 		
+		// small smoke effect on selected block
+		for (int i = 0; i < 5; i++) {
+			double x = 0.2 + Math.random() * 0.6;
+			double z = 0.2 + Math.random() * 0.6;
+			block.getWorld().playEffect(block.getRelative(BlockFace.UP).getLocation().add(new Vector(x, 0, z)), Effect.SMOKE, 4);
+		}
+		
 		pn.setMarkerLocation(block);
-		sendMessageTo(pl, "Marked block " + getBlockName(block));
+		sendMessageTo(pl, "Marked " + getBlockName(block));
 	}
 	
-	public void playerInitTeleportTo(Player pl, Block block)
+	public void playerInitTeleportTo(Player pl, Block hitBlock)
+	{
+		Block toBlock = playerCheckTeleportPossible(pl, hitBlock);
+		if (toBlock == null) {
+			return;
+		}
+		
+		// in case we want the fancy player twister sequence
+		if (Settings.teleportTwister) {
+			
+			if (twisterTasks.containsKey(pl)) {
+				sendMessageTo(pl, "You are already teleporting!");
+				return;			
+			}
+			
+			HashMap<String, Object> params = new HashMap<String, Object>();
+			params.put("plugin", this);
+			params.put("player", pl);
+			params.put("hitblock", hitBlock);
+			params.put("twister", new PlayerTwister(this, pl));
+			
+			int task = getServer().getScheduler().scheduleSyncRepeatingTask(this, new ParamRunnable(params) {
+				public void run()
+				{
+					EnderPearlRevamp plugin = (EnderPearlRevamp) getParam("plugin");
+					Player pl = (Player) getParam("player");
+					Block hitBlock = (Block) getParam("hitblock");
+					PlayerTwister twister = (PlayerTwister) getParam("twister");
+					
+					if (pl.isDead()) {
+						plugin.playerStopTwister(pl);
+						return;
+					}
+					
+					boolean terminate = twister.update();
+					if (terminate) {
+						playerStopTwister(pl);
+						// have to check again cuz shit could've happened between the start of the teleport sequence and now
+						Block toBlock = playerCheckTeleportPossible(pl, hitBlock);
+						if (toBlock != null) {
+							playerTeleport(pl, toBlock);
+						}
+					}
+				}
+			}, 1L,  1L);
+			
+			twisterTasks.put(pl, task);
+			
+		}
+		else {
+			playerTeleport(pl, toBlock);
+		}
+		
+		sendMessageTo(pl, "Teleporting to " + getBlockName(toBlock) + "...");
+	}
+	
+	public void playerTeleport(Player pl, Block toBlock)
+	{
+		Location telLoc = toBlock.getRelative(BlockFace.UP).getLocation();
+		telLoc.setPitch(pl.getLocation().getPitch());
+		telLoc.setYaw(pl.getLocation().getYaw());
+		telLoc.add(new Vector(0.5, 0, 0.5)); // adjust to center of block
+		
+		//pl.getWorld().playEffect(pl.getLocation(), Effect.SMOKE, 4);
+		teleportEffect(pl.getLocation());
+		pl.teleport(telLoc);
+		teleportEffect(telLoc);
+		
+		if (Settings.teleportPlayerDamageFraction > 0) {
+			double damage = pl.getMaxHealth() * Settings.teleportPlayerDamageFraction;
+			pl.damage((int) Math.ceil(damage));
+		}
+		
+		if (Settings.removeMarkAfterTeleport) {
+			PlayerPearlNetwork pn = getPN(pl);
+			pn.removeMarkerLocation(new BlockMarker(toBlock));
+			sendMessageTo(pl, "Your " + getBlockName(toBlock) + " mark has faded...");
+		}
+	}
+	
+	public Block playerCheckTeleportPossible(Player pl, Block hitBlock)
 	{
 		PlayerPearlNetwork pn = getPN(pl);
 		
-		if (!MarkerMetaData.isMarkable(block.getType())) {
+		if (!MarkerMetaData.isMarkable(hitBlock.getType())) {
 			sendMessageTo(pl, "Ender Pearl did not hit a solid block...");
-			return;
+			return null;
 		}
 		
-		Location loc = pn.getMarkerLocation(new BlockMarker(block));
+		Location loc = pn.getMarkerLocation(new BlockMarker(hitBlock));
 		if (loc == null) {
-			sendMessageTo(pl, "No marked spot for " + getBlockName(block));
-			return;
+			sendMessageTo(pl, "No marked spot for " + getBlockName(hitBlock));
+			return null;
 		}
 		
 		Block desBlock = loc.getBlock();
-		if (!MarkerMetaData.isSameMarkerBlock(block, desBlock)) {
-			sendMessageTo(pl, "Your marked " + getBlockName(block) + " was destroyed!" );
-			return;
+		if (!MarkerMetaData.isSameMarkerBlock(hitBlock, desBlock)) {
+			sendMessageTo(pl, "Your marked " + getBlockName(hitBlock) + " was destroyed!" );
+			return null;
 		}
 		
 		boolean free = true;
 		
-		// Check if free
-		desBlock = desBlock.getRelative(BlockFace.UP);
-		if (desBlock == null) {
+		// Check if free (if not at top of world and at least two spaces of non-solid blocks)
+		Block chBlock = desBlock.getRelative(BlockFace.UP);
+		if (chBlock == null) {
 			free = false;
 		}
 		else if (Settings.teleportRequireFreeSpot) {
-			if (desBlock.getType().isSolid()) { free = false; }
+			if (chBlock.getType().isSolid()) { free = false; }
 			else {
-				Block topBlock = desBlock.getRelative(BlockFace.UP);
-				free = (topBlock != null && !topBlock.getType().isSolid());
+				chBlock = chBlock.getRelative(BlockFace.UP);
+				free = (chBlock != null && !chBlock.getType().isSolid());
 			}
 		}
 		
 		if (!free) {
-			sendMessageTo(pl, "The marked " + getBlockName(block) + " location does not have space!");
-			return;
+			sendMessageTo(pl, "The marked " + getBlockName(desBlock) + " location does not have space!");
+			return null;
 		}
 		
-		Location telLoc = desBlock.getRelative(BlockFace.UP).getLocation();
-		telLoc.setPitch(pl.getLocation().getPitch());
-		telLoc.setYaw(pl.getLocation().getYaw());
+		return desBlock;
+	}
+	
+	public void playerStopTwister(Player pl)
+	{
+		Integer task = twisterTasks.get(pl);
+		if (task != null) {
+			getServer().getScheduler().cancelTask(task);
+			twisterTasks.remove(pl);
+		}
+	}
+	
+	public void playerDropRandomItem(Player pl)
+	{
 		
-		//pl.getWorld().playEffect(pl.getLocation(), Effect.SMOKE, 4);
+	}
+	
+	public void teleportEffect(Location loc)
+	{
 		if (craftBukkitUpToDate) {
-			Firework fw = pl.getWorld().spawn(pl.getLocation(), Firework.class);
+			Firework fw = loc.getWorld().spawn(loc, Firework.class);
 			FireworkMeta fwm = fw.getFireworkMeta();
 			FireworkEffect effect = FireworkEffect.builder().withColor(Color.AQUA).with(FireworkEffect.Type.BALL).build();
 			fwm.addEffects(effect);
@@ -185,25 +292,11 @@ public class EnderPearlRevamp extends JavaPlugin
 			fw.setFireworkMeta(fwm);
 			
 			// Firework effect
-			((CraftWorld) pl.getWorld()).getHandle().broadcastEntityEffect(
+			((CraftWorld) loc.getWorld()).getHandle().broadcastEntityEffect(
 	                ((CraftFirework) fw).getHandle(), (byte)17);
 			
 			fw.remove();
 		}
-		
-		pl.teleport(telLoc.add(new Vector(0.5, 0, 0.5)));
-		
-		if (Settings.teleportPlayerDamageFraction > 0) {
-			double damage = pl.getMaxHealth() * Settings.teleportPlayerDamageFraction;
-			pl.damage((int) Math.ceil(damage));
-		}
-		
-		sendMessageTo(pl, "Teleporting to " + getBlockName(block) + "...");
-	}
-	
-	public void playerTeleport()
-	{
-		
 	}
 	
 	//// Helpers ////

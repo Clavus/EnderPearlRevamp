@@ -9,11 +9,6 @@ public class PlayerPearlNetwork
 {
 	private HashMap<BlockMarker, Location> locs = new HashMap<BlockMarker, Location>();
 	
-	public PlayerPearlNetwork()
-	{
-		
-	}
-	
 	public void setMarkerLocation(Block block)
 	{
 		BlockMarker marker = new BlockMarker(block);
@@ -23,6 +18,11 @@ public class PlayerPearlNetwork
 	public Location getMarkerLocation(BlockMarker marker)
 	{
 		return locs.get(marker);
+	}
+	
+	public void removeMarkerLocation(BlockMarker marker)
+	{
+		locs.remove(marker);
 	}
 	
 }

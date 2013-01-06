@@ -83,7 +83,7 @@ public class EnderPearlRevampListener implements Listener
             Block bl = loc.getBlock();
             int i = 0;
             
-            while(!bl.getType().isSolid() && i < 15) {
+            while(!bl.getType().isSolid() && i < 20) {
             	Location blockLoc = new Location(loc.getWorld(), loc.getX()+(vec.getX()*0.1*i), loc.getY()+(vec.getY()*0.1*i), loc.getZ()+(vec.getZ()*0.1*i));
             	bl = blockLoc.getBlock();
             	i++;

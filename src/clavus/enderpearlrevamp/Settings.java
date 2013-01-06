@@ -8,7 +8,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public class Settings
 {
-	public static double teleportDelay = 2f;
+	public static double teleportDelay = 2.5f;
 	public static boolean teleportTwister = true;
 	public static double teleportPlayerDamageFraction = 0.25f;
 	public static boolean dropShitWhileSpinning = true;

@@ -39,15 +39,15 @@ public class BlockMarker
 		return metaData;
 	}
 	
+	// equality is independent of world
 	public boolean equals(Object o)
 	{
-		return (o instanceof BlockMarker) && world.equals(((BlockMarker) o).getWorld()) &&
-				((BlockMarker) o).getMaterialId() == matId && ((BlockMarker) o).getMetaData() == metaData;
+		return (o instanceof BlockMarker) && ((BlockMarker) o).getMaterialId() == matId && ((BlockMarker) o).getMetaData() == metaData;
 	}
 	
 	public int hashCode()
 	{
-		return 17 * matId + 17 * 17 * metaData + 17 * 17 * 17 * world.getUID().hashCode();
+		return 17 * matId + 17 * 17 * metaData;
 	}
 	
 }
