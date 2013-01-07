@@ -15,6 +15,8 @@ Details
 ---------
 You can only have on mark per type of block. However, you can mark different types of blocks to created a personal teleportation network. Some blocks with metadata (wool, logs, stone brick, sandstone) are also considered distinct.
 
+If your teleport fails, your thrown pearl falls back on the ground as an item.
+
 By default, you do not teleport instantly when your pearl hits a block, but instead you start spinning. While spinning there is a chance you drop a few items from your inventory.
 
 Configuration
