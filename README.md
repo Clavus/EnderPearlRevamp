@@ -32,3 +32,10 @@ See the config.yml (auto-created in the plugins/EnderPearlRevamp folder when sta
 Commands
 ---------
 Type '/epr reload' to reload the config.yml
+
+Known issues
+---------
+ 
+ * Firework teleport effect doesn't show if you teleport over long distance since the arrival chunk isn't loaded on the client
+ * Firework teleport effect will likely break during CraftBukkit version updates because of how it's coded, can't fix that yet. There is a failsafe that should prevent the entire plugin from breaking along with it.
+
