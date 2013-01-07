@@ -161,7 +161,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		}
 		
 		// in case we want the fancy player twister sequence
-		if (Settings.teleportTwister) {
+		if (Settings.spinPlayerOnTeleport) {
 			
 			if (twisterTasks.containsKey(pl)) {
 				sendMessageTo(pl, "You are already teleporting!");
@@ -172,7 +172,7 @@ public class EnderPearlRevamp extends JavaPlugin
 			params.put("plugin", this);
 			params.put("player", pl);
 			params.put("hitblock", hitBlock);
-			params.put("twister", new PlayerTwister(this, pl));
+			params.put("twister", new PlayerTwister(pl));
 			
 			int task = getServer().getScheduler().scheduleSyncRepeatingTask(this, new ParamRunnable(params) {
 				public void run()
@@ -309,8 +309,13 @@ public class EnderPearlRevamp extends JavaPlugin
 		}
 	}
 	
-	// picks a random item from the player's inventory and launches it away from him
-	public void playerDropRandomItem(Player pl)
+	public boolean isPlayerSpinning(Player pl)
+	{
+		return twisterTasks.get(pl) != null;
+	}
+	
+	// picks a few random items from a player's inventory and launches it away from him
+	public void playerDropRandomItems(Player pl)
 	{
 		ItemStack[] contents = pl.getInventory().getContents();
 		
@@ -328,18 +333,26 @@ public class EnderPearlRevamp extends JavaPlugin
 		
 		// pick random stack from inventory
 		Random rand = new Random();
-		int num = rand.nextInt(validIds.size());
-		ItemStack chosen = contents[validIds.get(num)].clone();
-		chosen.setAmount(1);
 		
-		pl.getInventory().removeItem(chosen);
-		Item item = pl.getWorld().dropItemNaturally(pl.getLocation(), chosen);
-		//print("Player dropped " + chosen.getType().toString());
+		int numDrops = 1 + rand.nextInt(3); // drop between 1 to 3 items
 		
-		// Randomize drop item velocity a bit
-		Vector curVel = item.getVelocity();
-		Vector addVel = new Vector(curVel.getX()*(1+rand.nextDouble()),0.4 + 0.2*rand.nextDouble(),curVel.getZ()*(1+rand.nextDouble()));
-		item.setVelocity(curVel.add(addVel));
+		for (int j = 0; j < numDrops; j++)
+		{
+			int num = rand.nextInt(validIds.size());
+			ItemStack chosen = contents[validIds.get(num)].clone();
+			if (chosen.getAmount() == 0) { continue; }
+			
+			chosen.setAmount(1);
+			
+			pl.getInventory().removeItem(chosen);
+			Item item = pl.getWorld().dropItemNaturally(pl.getLocation(), chosen);
+			//print("Player dropped " + chosen.getType().toString());
+			
+			// Randomize drop item velocity a bit
+			Vector curVel = item.getVelocity();
+			Vector addVel = new Vector(curVel.getX()*(1+rand.nextDouble()),0.4 + 0.2*rand.nextDouble(),curVel.getZ()*(1+rand.nextDouble()));
+			item.setVelocity(curVel.add(addVel));
+		}
 	}
 	
 	// fireworks!

@@ -13,23 +13,22 @@ By throwing a pearl against a block of the same type as the marked block, you wi
 
 Details
 ---------
-You can only have on mark per type of block. However, you can mark different types of blocks to created a personal teleportation network. Some blocks with metadata (wool, logs, stone brick, sandstone) are also considered distinct.
+You can only have one mark per type of block. By marking different types of blocks to created a personal teleportation network. Some blocks with metadata (wool, logs, stone brick, sandstone) are also considered distinct.
 
 If your teleport fails, your thrown pearl falls back on the ground as an item.
 
-By default, you do not teleport instantly when your pearl hits a block, but instead you start spinning. While spinning there is a chance you drop a few items from your inventory.
+By default, you do not teleport instantly when your pearl hits a block, but instead you start spinning. While spinning you are vulnerable to other players and mob: if you're damaged you could drop a few items from your inventory!
 
 Configuration
 ---------
 See the config.yml (auto-created in the plugins/EnderPearlRevamp folder when starting the server)
 
- * teleportDelay: 2.5 // Delay in seconds before you are teleported. Set to 0 to make teleporting instant.
- * teleportTwister: true // Whether to start spinning during the delay period.
- * teleportPlayerDamageFraction: 0.25 // Damage done to player after teleporting, as fraction of max health (ignores armor and other effects)
- * dropShitWhileSpinning: true // Whether to drop items when the player is spinning
- * dropChancePer10thSecond: 0.1 // Chance that you drop an item every 10th of a second (range 0.0 to 1.0)
- * removeMarkAfterTeleport: true // Whether to remove the used mark after teleporation. This forces players to re-apply the mark if they want to use the same spot again.
- * teleportRequireFreeSpot: false // Whether teleportation is aborted if there is no free spot at the marked block. If disabled, players could get stuck, but this could be considered a risk of teleporation.
+ * <b>teleportDelay: 2.5</b> // Delay in seconds before you are teleported. Set to 0 to make teleporting instant.
+ * <b>spinPlayerOnTeleport: true</b> // Whether a player starts spinning during the teleport delay period.
+ * <b>teleportPlayerDamageFraction: 0.25</b> // Damage done to player after teleporting, as fraction of max health (ignores armor and other effects)
+ * <b>dropItemsOnDamageWhileSpinning: true</b> // If something damages a spinning player, he drops a few items from his inventory. This way people trying to chicken out of PvP can still lose some stuff to their attackers. 
+ * <b>removeMarkAfterTeleport: true</b> // Whether to remove the used mark after teleporation. This forces players to re-apply the mark if they want to use the same spot again.
+ * <b>teleportRequireFreeSpot: false</b> // Whether teleportation is aborted if there is no free spot at the marked block. If disabled, players could get stuck, but this could be considered a risk of teleporation.
  
 Commands
 ---------

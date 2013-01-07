@@ -9,10 +9,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 public class Settings
 {
 	public static double teleportDelay = 2.5f;
-	public static boolean teleportTwister = true;
+	public static boolean spinPlayerOnTeleport = true;
 	public static double teleportPlayerDamageFraction = 0.25f;
-	public static boolean dropShitWhileSpinning = true;
-	public static double dropChancePer10thSecond = 0.1f;
+	public static boolean dropItemsOnDamageWhileSpinning = true;
 	public static boolean removeMarkAfterTeleport = true;
 	public static boolean teleportRequireFreeSpot = false;
 	

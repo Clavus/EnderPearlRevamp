@@ -1,7 +1,6 @@
 teleportDelay: 2.5
-teleportTwister: true
+spinPlayerOnTeleport: true
 teleportPlayerDamageFraction: 0.25
-dropShitWhileSpinning: true
-dropChancePer10thSecond: 0.1
+dropItemsOnDamageWhileSpinning: true
 removeMarkAfterTeleport: true
 teleportRequireFreeSpot: false

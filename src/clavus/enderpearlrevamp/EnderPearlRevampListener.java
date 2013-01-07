@@ -14,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -96,6 +97,18 @@ public class EnderPearlRevampListener implements Listener
             }
 		}
 		
+	}
+	
+	// if damage was registered while player is in teleport sequence, drop items
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void onEntityDamageByEntityEvent(EntityDamageByEntityEvent e)
+	{
+		if (e.isCancelled()) { return; }
+		
+		Entity ent = e.getEntity();
+		if (Settings.dropItemsOnDamageWhileSpinning && ent instanceof Player && plugin.isPlayerSpinning((Player) ent)) {
+			plugin.playerDropRandomItems((Player) ent);
+		}
 	}
 	
 	
