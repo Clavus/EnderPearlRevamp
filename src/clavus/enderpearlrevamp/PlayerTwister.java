@@ -30,6 +30,8 @@ public class PlayerTwister
 	// returns true when it terminates
 	public boolean update()
 	{
+		if (pl == null) { return true; }
+		
 		if (lastUpdate == 0) {
 			lastUpdate = System.currentTimeMillis();
 		}

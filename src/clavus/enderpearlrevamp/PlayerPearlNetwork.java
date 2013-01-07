@@ -1,6 +1,7 @@
 package clavus.enderpearlrevamp;
 
 import java.util.HashMap;
+import java.util.Set;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -15,6 +16,12 @@ public class PlayerPearlNetwork
 		locs.put(marker, block.getLocation());	
 	}
 	
+	public void setMarkerLocation(Location loc, int matId, byte meta)
+	{
+		BlockMarker marker = new BlockMarker(loc.getWorld(), matId, meta);
+		locs.put(marker, loc);
+	}	
+	
 	public Location getMarkerLocation(BlockMarker marker)
 	{
 		return locs.get(marker);
@@ -23,6 +30,11 @@ public class PlayerPearlNetwork
 	public void removeMarkerLocation(BlockMarker marker)
 	{
 		locs.remove(marker);
+	}
+	
+	public Set<BlockMarker> getMarkers()
+	{
+		return locs.keySet();
 	}
 	
 }

@@ -44,7 +44,7 @@ public class EnderPearlRevamp extends JavaPlugin
 	private FileConfiguration playerData;
 	private File playerDataFile;
 	
-	private HashMap<Player, PlayerPearlNetwork> pearlNetwork = new HashMap<Player, PlayerPearlNetwork>();
+	private HashMap<String, PlayerPearlNetwork> pearlNetwork = new HashMap<String, PlayerPearlNetwork>();
 	private HashMap<Player, Integer> twisterTasks = new HashMap<Player, Integer>();
 	
 	private boolean craftBukkitUpToDate = true;
@@ -74,6 +74,9 @@ public class EnderPearlRevamp extends JavaPlugin
 	
 	public void onDisable() 
 	{
+		PearlNetwork.storePearlNetwork(pearlNetwork, playerData);
+		savePlayerData();
+		
 		PluginDescriptionFile pdfFile = this.getDescription();
         print("Closing " + pdfFile.getName() + "!");
 	}
@@ -118,10 +121,11 @@ public class EnderPearlRevamp extends JavaPlugin
 	
 	public PlayerPearlNetwork getPN(Player pl)
 	{
-		PlayerPearlNetwork pn = pearlNetwork.get(pl);
+		String name = pl.getDisplayName().toLowerCase();
+		PlayerPearlNetwork pn = pearlNetwork.get(name);
 		if (pn == null) {
-			pn = new PlayerPearlNetwork();
-			pearlNetwork.put(pl, pn);
+			pn = PearlNetwork.readPlayerPearlNetwork(getServer(), pl, playerData);
+			pearlNetwork.put(name, pn);
 		}
 		return pn;
 	}
@@ -177,7 +181,7 @@ public class EnderPearlRevamp extends JavaPlugin
 					Block hitBlock = (Block) getParam("hitblock");
 					PlayerTwister twister = (PlayerTwister) getParam("twister");
 					
-					if (pl.isDead()) {
+					if (pl.isDead() || !pl.isOnline()) {
 						plugin.playerStopTwister(pl);
 						return;
 					}
@@ -318,6 +322,8 @@ public class EnderPearlRevamp extends JavaPlugin
 			i++;
 		}
 		
+		if (validIds.size() == 0) { return; } // this guy is broke
+		
 		// pick random stack from inventory
 		Random rand = new Random();
 		int num = rand.nextInt(validIds.size());
@@ -405,7 +411,7 @@ public class EnderPearlRevamp extends JavaPlugin
 			Class.forName( path );
 			return true;
 		} catch( ClassNotFoundException e ) {
-			scream(ChatColor.RED + "Class " + path + " does not exist! Make sure plugin is compiled with server version of CraftBukkit");
+			scream(ChatColor.RED + "Class " + path + " does not exist! Plugin needs to be compiled with the latest CraftBukkit");
 			return false;
 		}
 	}
@@ -414,7 +420,12 @@ public class EnderPearlRevamp extends JavaPlugin
 	
 	public void sendMessageTo(Player pl, String msg)
 	{
-		pl.sendMessage(chatTag + ChatColor.GRAY + msg);
+		if (pl == null) {
+			print(msg);
+		}
+		else {
+			pl.sendMessage(chatTag + ChatColor.GRAY + msg);
+		}
 	}
 	
 	public void print(String msg)
