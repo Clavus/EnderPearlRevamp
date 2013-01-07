@@ -90,7 +90,10 @@ public class EnderPearlRevampListener implements Listener
             }
             
             //plugin.print("EnderPearl hit block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
-            plugin.playerInitTeleportTo((Player) shooter, bl);
+            boolean success = plugin.playerInitTeleportTo((Player) shooter, bl);
+            if (!success) {
+            	plugin.dropPearl(loc);
+            }
 		}
 		
 	}

@@ -2,7 +2,7 @@ name: EnderPearlRevamp
 
 main: clavus.enderpearlrevamp.EnderPearlRevamp
 
-version: 1.0
+version: 1.1
 
 commands:
    epr:

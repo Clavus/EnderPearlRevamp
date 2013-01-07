@@ -13,6 +13,7 @@ import org.bukkit.Color;
 import org.bukkit.Effect;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
@@ -151,12 +152,12 @@ public class EnderPearlRevamp extends JavaPlugin
 		sendMessageTo(pl, "Marked " + getBlockName(block));
 	}
 	
-	// start teleport sequence
-	public void playerInitTeleportTo(Player pl, Block hitBlock)
+	// start teleport sequence, returns whether successful
+	public boolean playerInitTeleportTo(Player pl, Block hitBlock)
 	{
 		Block toBlock = playerCheckTeleportPossible(pl, hitBlock);
 		if (toBlock == null) {
-			return;
+			return false;
 		}
 		
 		// in case we want the fancy player twister sequence
@@ -164,7 +165,7 @@ public class EnderPearlRevamp extends JavaPlugin
 			
 			if (twisterTasks.containsKey(pl)) {
 				sendMessageTo(pl, "You are already teleporting!");
-				return;			
+				return false;			
 			}
 			
 			HashMap<String, Object> params = new HashMap<String, Object>();
@@ -206,6 +207,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		}
 		
 		sendMessageTo(pl, "Teleporting to " + getBlockName(toBlock) + "...");
+		return true;
 	}
 	
 	// teleportation shenanigans
@@ -357,6 +359,13 @@ public class EnderPearlRevamp extends JavaPlugin
 			
 			fw.remove();
 		}
+	}
+	
+	// drop an enderpearl on the given location
+	public void dropPearl(Location loc)
+	{
+		ItemStack pearl = new ItemStack(Material.ENDER_PEARL, 1);
+		loc.getWorld().dropItemNaturally(loc, pearl);
 	}
 	
 	//// Helpers ////
