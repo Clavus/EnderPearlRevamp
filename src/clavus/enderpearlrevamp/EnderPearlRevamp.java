@@ -75,7 +75,6 @@ public class EnderPearlRevamp extends JavaPlugin
 	
 	public void onDisable() 
 	{
-		PearlNetwork.storePearlNetwork(pearlNetwork, playerData);
 		savePlayerData();
 		
 		PluginDescriptionFile pdfFile = this.getDescription();
@@ -417,6 +416,8 @@ public class EnderPearlRevamp extends JavaPlugin
 	    if (playerData == null || playerDataFile == null) {
 	    	return;
 	    }
+	    
+	    PearlNetwork.storePearlNetwork(pearlNetwork, playerData);
 	    
 	    try {
 	        playerData.save(playerDataFile);

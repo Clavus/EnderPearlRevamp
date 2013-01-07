@@ -19,6 +19,7 @@ import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.bukkit.event.world.WorldSaveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
@@ -111,6 +112,10 @@ public class EnderPearlRevampListener implements Listener
 		}
 	}
 	
-	
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onWorldSaveEvent(WorldSaveEvent e)
+	{
+		plugin.savePlayerData();
+	}
 	
 }
