@@ -2,7 +2,9 @@ package clavus.enderpearlrevamp;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,6 +22,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.v1_4_6.CraftWorld;
 import org.bukkit.craftbukkit.v1_4_6.entity.CraftFirework;
 import org.bukkit.entity.Firework;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
@@ -123,6 +126,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		return pn;
 	}
 	
+	// mark the given block
 	public void playerMarkBlock(Player pl, Block block)
 	{
 		PlayerPearlNetwork pn = getPN(pl);
@@ -143,6 +147,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		sendMessageTo(pl, "Marked " + getBlockName(block));
 	}
 	
+	// start teleport sequence
 	public void playerInitTeleportTo(Player pl, Block hitBlock)
 	{
 		Block toBlock = playerCheckTeleportPossible(pl, hitBlock);
@@ -199,6 +204,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		sendMessageTo(pl, "Teleporting to " + getBlockName(toBlock) + "...");
 	}
 	
+	// teleportation shenanigans
 	public void playerTeleport(Player pl, Block toBlock)
 	{
 		Location telLoc = toBlock.getRelative(BlockFace.UP).getLocation();
@@ -209,7 +215,26 @@ public class EnderPearlRevamp extends JavaPlugin
 		//pl.getWorld().playEffect(pl.getLocation(), Effect.SMOKE, 4);
 		teleportEffect(pl.getLocation());
 		pl.teleport(telLoc);
-		teleportEffect(telLoc);
+		
+		// if you're so far away that it's likely you don't have the chunk loaded, delay the effect by a second so it'll show up when you arrive
+		// TODO: doesn't seem to work yet? :(
+		if (pl.getLocation().distanceSquared(telLoc) > getServer().getViewDistance() * 16) {
+			HashMap<String, Object> params = new HashMap<String, Object>();
+			params.put("loc", telLoc);
+			
+			getServer().getScheduler().scheduleSyncDelayedTask(this, new ParamRunnable(params)
+			{
+				public void run()
+				{
+					Location telLoc = (Location) getParam("loc");
+					teleportEffect(telLoc);
+				}
+				
+			}, 10L); // 1/2th of second, if server's not delayed
+		}
+		else {
+			teleportEffect(telLoc);
+		}
 		
 		if (Settings.teleportPlayerDamageFraction > 0) {
 			double damage = pl.getMaxHealth() * Settings.teleportPlayerDamageFraction;
@@ -223,6 +248,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		}
 	}
 	
+	// check if player has the option to teleport to a marked block of the same type as the hit block
 	public Block playerCheckTeleportPossible(Player pl, Block hitBlock)
 	{
 		PlayerPearlNetwork pn = getPN(pl);
@@ -267,6 +293,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		return desBlock;
 	}
 	
+	// stop the puke inducing twister
 	public void playerStopTwister(Player pl)
 	{
 		Integer task = twisterTasks.get(pl);
@@ -276,11 +303,38 @@ public class EnderPearlRevamp extends JavaPlugin
 		}
 	}
 	
+	// picks a random item from the player's inventory and launches it away from him
 	public void playerDropRandomItem(Player pl)
 	{
+		ItemStack[] contents = pl.getInventory().getContents();
 		
+		// fetch all occupied ids
+		ArrayList<Integer> validIds = new ArrayList<Integer>();
+		int i = 0;
+		for(ItemStack stack : contents) {
+			if (stack != null && stack.getAmount() > 0) {
+				validIds.add(i);
+			}
+			i++;
+		}
+		
+		// pick random stack from inventory
+		Random rand = new Random();
+		int num = rand.nextInt(validIds.size());
+		ItemStack chosen = contents[validIds.get(num)].clone();
+		chosen.setAmount(1);
+		
+		pl.getInventory().removeItem(chosen);
+		Item item = pl.getWorld().dropItemNaturally(pl.getLocation(), chosen);
+		//print("Player dropped " + chosen.getType().toString());
+		
+		// Randomize drop item velocity a bit
+		Vector curVel = item.getVelocity();
+		Vector addVel = new Vector(curVel.getX()*(1+rand.nextDouble()),0.4 + 0.2*rand.nextDouble(),curVel.getZ()*(1+rand.nextDouble()));
+		item.setVelocity(curVel.add(addVel));
 	}
 	
+	// fireworks!
 	public void teleportEffect(Location loc)
 	{
 		if (craftBukkitUpToDate) {

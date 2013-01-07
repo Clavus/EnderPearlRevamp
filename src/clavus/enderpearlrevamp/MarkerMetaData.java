@@ -61,8 +61,7 @@ public class MarkerMetaData
 	
 	public static boolean isSameMarkerBlock(Block bl1, Block bl2)
 	{
-		return bl1.getWorld().equals(bl2.getWorld()) && bl1.getType() == bl2.getType() && 
-				getUsableMetaData(bl1.getType(), bl1.getData()) == getUsableMetaData(bl2.getType(), bl2.getData());
+		return bl1.getType() == bl2.getType() && getUsableMetaData(bl1.getType(), bl1.getData()) == getUsableMetaData(bl2.getType(), bl2.getData());
 	}
 	
 	public static boolean isMarkable(Material mat)
