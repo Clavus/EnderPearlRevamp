@@ -48,6 +48,8 @@ public class EnderPearlRevamp extends JavaPlugin
 	private HashMap<String, PlayerPearlNetwork> pearlNetwork = new HashMap<String, PlayerPearlNetwork>();
 	private HashMap<Player, Integer> twisterTasks = new HashMap<Player, Integer>();
 	
+	private int savingTask;
+	private boolean playerDataChanged = false;
 	private boolean craftBukkitUpToDate = true;
 	private Logger log;
 	
@@ -64,6 +66,18 @@ public class EnderPearlRevamp extends JavaPlugin
 		
 		Settings.parseConfig(log, config);
 		
+		// set up every-5-minutes saving task
+		long every5mins = 20L * 60L * 5L;
+		HashMap<String, Object> params = new HashMap<String, Object>();
+		params.put("plugin", this);
+		savingTask = getServer().getScheduler().scheduleSyncRepeatingTask(this, new ParamRunnable(params)
+		{
+			public void run()
+			{
+				((EnderPearlRevamp) getParam("plugin")).savePlayerData();
+			}
+		}, every5mins, every5mins);
+		
 		PluginManager pm = this.getServer().getPluginManager();
 		pm.registerEvents(epListener, this);
 		
@@ -75,6 +89,9 @@ public class EnderPearlRevamp extends JavaPlugin
 	
 	public void onDisable() 
 	{
+		getServer().getScheduler().cancelTask(savingTask);
+		
+		playerDataChanged = true; // force saving just to be sure
 		savePlayerData();
 		
 		PluginDescriptionFile pdfFile = this.getDescription();
@@ -135,11 +152,6 @@ public class EnderPearlRevamp extends JavaPlugin
 	{
 		PlayerPearlNetwork pn = getPN(pl);
 		
-		if (!MarkerMetaData.isMarkable(block.getType())) {
-			sendMessageTo(pl, "Cannot mark this spot...");
-			return;
-		}
-		
 		// small smoke effect on selected block
 		for (int i = 0; i < 5; i++) {
 			double x = 0.2 + Math.random() * 0.6;
@@ -149,6 +161,8 @@ public class EnderPearlRevamp extends JavaPlugin
 		
 		pn.setMarkerLocation(block);
 		sendMessageTo(pl, "Marked " + getBlockName(block));
+		
+		playerDataChanged = true;
 	}
 	
 	// start teleport sequence, returns whether successful
@@ -223,7 +237,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		
 		// if you're so far away that it's likely you don't have the chunk loaded, delay the effect by a second so it'll show up when you arrive
 		// TODO: doesn't seem to work yet? :(
-		if (pl.getLocation().distanceSquared(telLoc) > getServer().getViewDistance() * 16) {
+		if (pl.getLocation().distance(telLoc) > getServer().getViewDistance() * 16) {
 			HashMap<String, Object> params = new HashMap<String, Object>();
 			params.put("loc", telLoc);
 			
@@ -250,6 +264,8 @@ public class EnderPearlRevamp extends JavaPlugin
 			PlayerPearlNetwork pn = getPN(pl);
 			pn.removeMarkerLocation(new BlockMarker(toBlock));
 			sendMessageTo(pl, "Your " + getBlockName(toBlock) + " mark has faded...");
+			
+			playerDataChanged = true;
 		}
 	}
 	
@@ -371,6 +387,9 @@ public class EnderPearlRevamp extends JavaPlugin
 			
 			fw.remove();
 		}
+		else {
+			// TODO: good replacement
+		}
 	}
 	
 	// drop an enderpearl on the given location
@@ -382,12 +401,18 @@ public class EnderPearlRevamp extends JavaPlugin
 	
 	//// Helpers ////
 	
-	private String getBlockName(Block bl)
+	public String getBlockName(Material mat, Byte meta)
 	{
-		ItemStack stack = new ItemStack(bl.getType(), 1, (short)0);
-		stack.setData(new MaterialData(bl.getType(), bl.getData()));
+		ItemStack stack = new ItemStack(mat, 1, (short)0);
+		if (meta == null) { stack.setData(new MaterialData(mat)); }
+		else { stack.setData(new MaterialData(mat, meta)); }
 		return stack.hasItemMeta() ? stack.getItemMeta().getDisplayName() : 
-			MarkerMetaData.getMetaDataPrefix(bl.getType(), bl.getData()) + stack.getType().name().replace("_", " ").toLowerCase();
+			MarkerMetaData.getMetaDataPrefix(mat, meta) + stack.getType().name().replace("_", " ").toLowerCase();
+	}
+	
+	public String getBlockName(Block bl)
+	{
+		return getBlockName(bl.getType(), bl.getData());
 	}
 	
 	//// Config stuff ////
@@ -410,10 +435,11 @@ public class EnderPearlRevamp extends JavaPlugin
 	    	playerDataFile = new File(getDataFolder(), "playerData.yml");
 	    }
 	    playerData = YamlConfiguration.loadConfiguration(playerDataFile);
+	    playerDataChanged = false;
 	}
 	
 	public void savePlayerData() {
-	    if (playerData == null || playerDataFile == null) {
+	    if (playerData == null || playerDataFile == null || !playerDataChanged) {
 	    	return;
 	    }
 	    

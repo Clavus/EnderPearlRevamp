@@ -10,7 +10,8 @@ import org.bukkit.block.Block;
 public class MarkerMetaData
 {
 	private static HashMap<Material, ArrayList<String>> allowedData;
-	private static ArrayList<Material> notMarkable = new ArrayList<Material>(Arrays.asList(Material.AIR, Material.PISTON_EXTENSION));
+	private static ArrayList<Material> notMarkable = new ArrayList<Material>(Arrays.asList(Material.AIR, Material.PISTON_EXTENSION, Material.FENCE, Material.FENCE_GATE,
+			Material.WOOD_DOOR, Material.IRON_DOOR, Material.COBBLE_WALL, Material.WOODEN_DOOR));
 	
 	static {
 		allowedData = new HashMap<Material, ArrayList<String>>();

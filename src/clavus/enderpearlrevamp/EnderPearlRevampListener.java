@@ -1,6 +1,7 @@
 package clavus.enderpearlrevamp;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -30,9 +31,17 @@ public class EnderPearlRevampListener implements Listener
 	private HashMap<Player, Long> plTime = new HashMap<Player, Long>();
 	private long interactCooldown = 500; // in milliseconds
 	
+	private HashSet<Byte> transparent = new HashSet<Byte>();
+	
 	public EnderPearlRevampListener(EnderPearlRevamp plugin)
 	{
 		this.plugin = plugin;
+		
+		for( Material mat : Material.values()) {
+			if (mat.isBlock() && !mat.isSolid()) {
+				transparent.add((byte) mat.getId());
+			}
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
@@ -41,24 +50,26 @@ public class EnderPearlRevampListener implements Listener
 		ItemStack item = e.getItem();
 		Player pl = e.getPlayer();
 		
-		if (item != null && item.getType() == Material.ENDER_PEARL)
-		{
-			if (e.getAction() == Action.LEFT_CLICK_BLOCK) {
-				
-				if (!plTime.containsKey(pl) || System.currentTimeMillis() - plTime.get(pl) > interactCooldown) { // prevent spam
-					plTime.put(pl, System.currentTimeMillis());
-					
-					BlockFace face = e.getBlockFace();
-					Block bl = e.getClickedBlock();
-					
-					if (face == BlockFace.UP) {
+		if (item != null && item.getType() == Material.ENDER_PEARL && e.getAction() == Action.LEFT_CLICK_BLOCK) {
+			
+			BlockFace face = e.getBlockFace();
+			Block bl = e.getClickedBlock();
+			
+			if (MarkerMetaData.isMarkable(bl.getType()) && !bl.isLiquid() && playerCanHit(pl, bl)) {
+				if (face == BlockFace.UP) {
+					if (!plTime.containsKey(pl) || System.currentTimeMillis() - plTime.get(pl) > interactCooldown) { // prevent spam
+						plTime.put(pl, System.currentTimeMillis());
+						
 						//plugin.print("Player interacted with block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
 						plugin.playerMarkBlock(pl, bl);
 					}
-					else {
-						plugin.sendMessageTo(pl, "Touch the top side of the block to mark it!");
-					}
 				}
+				else {
+					plugin.sendMessageTo(pl, "Touch the top side of the block to mark it!");
+				}
+			}
+			else {
+				plugin.sendMessageTo(pl, "Cannot mark this spot...");
 			}
 		}
 	
@@ -116,6 +127,15 @@ public class EnderPearlRevampListener implements Listener
 	public void onWorldSaveEvent(WorldSaveEvent e)
 	{
 		plugin.savePlayerData();
+	}
+	
+	// Helpers
+	
+	private boolean playerCanHit(Player pl, Block hitBlock)
+	{
+		Block hitCBlock = pl.getTargetBlock(transparent, 5);
+		// TODO: check for opened door
+		return hitCBlock.getLocation().equals(hitBlock.getLocation());
 	}
 	
 }
