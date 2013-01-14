@@ -28,6 +28,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.material.MaterialData;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -35,11 +36,15 @@ import org.bukkit.util.Vector;
 
 import clavus.enderpearlrevamp.runnable.ParamRunnable;
 
+import com.massivecraft.factions.Board;
+import com.massivecraft.factions.FLocation;
+import com.massivecraft.factions.Faction;
+
 public class EnderPearlRevamp extends JavaPlugin
 {
 	private EnderPearlRevampListener epListener = new EnderPearlRevampListener(this);
-	private String chatTag = ChatColor.AQUA + "o ";
-	private String consoleTag = "[EPR] ";
+	private static String chatTag = ChatColor.AQUA + "o ";
+	private static String consoleTag = "[EPR] ";
 	
 	private FileConfiguration config;
 	private FileConfiguration playerData;
@@ -48,10 +53,11 @@ public class EnderPearlRevamp extends JavaPlugin
 	private HashMap<String, PlayerPearlNetwork> pearlNetwork = new HashMap<String, PlayerPearlNetwork>();
 	private HashMap<Player, Integer> twisterTasks = new HashMap<Player, Integer>();
 	
+	private boolean factionsEnabled;
 	private int savingTask;
 	private boolean playerDataChanged = false;
 	private boolean craftBukkitUpToDate = true;
-	private Logger log;
+	private static Logger log;
 	
 	public EnderPearlRevamp()
 	{
@@ -81,8 +87,16 @@ public class EnderPearlRevamp extends JavaPlugin
 		PluginManager pm = this.getServer().getPluginManager();
 		pm.registerEvents(epListener, this);
 		
+		// attempt to load the factions plugin
+		Plugin factions = pm.getPlugin("Factions");
+		factionsEnabled = (factions != null);
+				
 		PluginDescriptionFile pdfFile = this.getDescription();
 		print(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");
+		
+		if (factionsEnabled) {
+			print("Detected Factions " + factions.getDescription().getVersion() + "!");
+		}
 		
 		craftBukkitUpToDate = checkClass("org.bukkit.craftbukkit.v1_4_6.CraftWorld");
 	}
@@ -274,7 +288,7 @@ public class EnderPearlRevamp extends JavaPlugin
 	{
 		PlayerPearlNetwork pn = getPN(pl);
 		
-		if (!MarkerMetaData.isMarkable(hitBlock.getType())) {
+		if (!MarkerMetaData.isBlockMarkable(hitBlock.getType())) {
 			sendMessageTo(pl, "Ender Pearl did not hit a solid block...");
 			return null;
 		}
@@ -370,25 +384,58 @@ public class EnderPearlRevamp extends JavaPlugin
 		}
 	}
 	
+	public boolean isFactionsMarkable(Player pl, Block bl)
+	{
+		if (!factionsEnabled) { return true; }
+		
+		//FPlayer fpl = FPlayers.i.get(pl);
+		//Faction plf = fpl.getFaction();
+		Faction f = Board.getFactionAt(new FLocation(bl.getLocation()));
+		
+		if (f.isSafeZone() && !Settings.factionsAllowMarkingInSafezone) {
+			sendMessageTo(pl, "Can't place marks in safezones!");
+			return false; 
+		}
+		if (f.isWarZone() && !Settings.factionsAllowMarkingInWarzone) {
+			sendMessageTo(pl, "Can't place marks in warzones!");
+			return false;
+		}
+		/*if (f.getRelationTo(plf) == Relation.ALLY && !Settings.factionsAllowMarkingInAllyLand) {
+			sendMessageTo(pl, "Can't place marks in ally faction territory!");
+			return false;
+		}
+		if (f.getRelationTo(plf) == Relation.NEUTRAL && !f.isNone() && !Settings.factionsAllowMarkingInNeutralLand) {
+			sendMessageTo(pl, "Can't place marks in neutral faction territory!");
+			return false;
+		}
+		if (f.getRelationTo(plf) == Relation.ENEMY && !Settings.factionsAllowMarkingInEnemyLand) {
+			sendMessageTo(pl, "Can't place marks in enemy faction territory!");
+			return false;
+		}*/
+		if (f.isNone() && !Settings.factionsAllowMarkingInWilderness) {
+			sendMessageTo(pl, "Can't place marks in the wilderness!");
+			return false;
+		}
+		
+		return true;
+	}
+	
 	// fireworks!
 	public void teleportEffect(Location loc)
 	{
+		Firework fw = loc.getWorld().spawn(loc, Firework.class);
+		FireworkMeta fwm = fw.getFireworkMeta();
+		FireworkEffect effect = FireworkEffect.builder().withColor(Color.AQUA).with(FireworkEffect.Type.BALL).build();
+		fwm.addEffects(effect);
+		fwm.setPower(0);
+		fw.setFireworkMeta(fwm);
+		
 		if (craftBukkitUpToDate) {
-			Firework fw = loc.getWorld().spawn(loc, Firework.class);
-			FireworkMeta fwm = fw.getFireworkMeta();
-			FireworkEffect effect = FireworkEffect.builder().withColor(Color.AQUA).with(FireworkEffect.Type.BALL).build();
-			fwm.addEffects(effect);
-			fwm.setPower(0);
-			fw.setFireworkMeta(fwm);
-			
 			// Firework effect
 			((CraftWorld) loc.getWorld()).getHandle().broadcastEntityEffect(
 	                ((CraftFirework) fw).getHandle(), (byte)17);
 			
 			fw.remove();
-		}
-		else {
-			// TODO: good replacement
 		}
 	}
 	
@@ -406,8 +453,9 @@ public class EnderPearlRevamp extends JavaPlugin
 		ItemStack stack = new ItemStack(mat, 1, (short)0);
 		if (meta == null) { stack.setData(new MaterialData(mat)); }
 		else { stack.setData(new MaterialData(mat, meta)); }
+		
 		return stack.hasItemMeta() ? stack.getItemMeta().getDisplayName() : 
-			MarkerMetaData.getMetaDataPrefix(mat, meta) + stack.getType().name().replace("_", " ").toLowerCase();
+			MarkerMetaData.getMetaDataFormat(stack.getType().name().replace("_", " ").toLowerCase(), mat, meta);
 	}
 	
 	public String getBlockName(Block bl)

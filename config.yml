@@ -4,3 +4,14 @@ teleportPlayerDamageFraction: 0.25
 dropItemsOnDamageWhileSpinning: true
 removeMarkAfterTeleport: true
 teleportRequireFreeSpot: false
+notMarkable:
+  - PISTON_EXTENSION
+  - FENCE
+  - FENCE_GATE
+  - WOOD_DOOR
+  - IRON_DOOR
+  - COBBLE_WALL
+  - WOODEN_DOOR
+factionsAllowMarkingInWarzone: true
+factionsAllowMarkingInSafezone: true
+factionsAllowMarkingInWilderness: true

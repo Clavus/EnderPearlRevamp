@@ -58,13 +58,15 @@ public class EnderPearlRevampListener implements Listener
 			if (!plTime.containsKey(pl) || System.currentTimeMillis() - plTime.get(pl) > interactCooldown) { // prevent spam
 				plTime.put(pl, System.currentTimeMillis());
 					
-				if (MarkerMetaData.isMarkable(bl.getType()) && !bl.isLiquid() && playerCanHit(pl, bl)) {
-					if (face == BlockFace.UP) {
-						//plugin.print("Player interacted with block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
-						plugin.playerMarkBlock(pl, bl);
-					}
-					else {
-						plugin.sendMessageTo(pl, "Touch the top side of the block to mark it!");
+				if (MarkerMetaData.isBlockMarkable(bl.getType()) && !bl.isLiquid() && playerCanHit(pl, bl)) {
+					if (plugin.isFactionsMarkable(pl, bl)) {
+						if (face == BlockFace.UP) {
+							//plugin.print("Player interacted with block: (" + bl.getTypeId() + ":" + bl.getData() + ") " + bl.getType().toString());
+							plugin.playerMarkBlock(pl, bl);
+						}
+						else {
+							plugin.sendMessageTo(pl, "Touch the top side of the block to mark it!");
+						}
 					}
 				}
 				else {

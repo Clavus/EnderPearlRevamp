@@ -29,6 +29,10 @@ See the config.yml (auto-created in the plugins/EnderPearlRevamp folder when sta
  * <b>dropItemsOnDamageWhileSpinning: true</b> // If something damages a spinning player, he drops a few items from his inventory. This way people trying to chicken out of PvP can still lose some stuff to their attackers. 
  * <b>removeMarkAfterTeleport: true</b> // Whether to remove the used mark after teleporation. This forces players to re-apply the mark if they want to use the same spot again.
  * <b>teleportRequireFreeSpot: false</b> // Whether teleportation is aborted if there is no free spot at the marked block. If disabled, players could get stuck, but this could be considered a risk of teleporation.
+ * <b>notMarkable: [list]<b> // Names of solid block materials that cannot be marked. Check the public attributes at http://jd.bukkit.org/doxygen/d6/d0e/enumorg_1_1bukkit_1_1Material.html for valid values.
+ * <b>factionsAllowMarkingInWarzone: true<b> // Factions specific. Allow marking inside warzones.
+ * <b>factionsAllowMarkingInSafezone: true<b> // Factions specific. Allow marking inside safezones
+ * <b>factionsAllowMarkingInWilderness: true<b> // Factions specific. Allow marking inside wilderness.
  
 Commands
 ---------
