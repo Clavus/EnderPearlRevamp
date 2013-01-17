@@ -20,8 +20,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.v1_4_6.CraftWorld;
-import org.bukkit.craftbukkit.v1_4_6.entity.CraftFirework;
+import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_4_R1.entity.CraftFirework;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -507,7 +507,7 @@ public class EnderPearlRevamp extends JavaPlugin
 		try {
 			Class.forName( path );
 			return true;
-		} catch( ClassNotFoundException e ) {
+		} catch( Exception e ) {
 			scream(ChatColor.RED + "Class " + path + " does not exist! Plugin needs to be compiled with the latest CraftBukkit");
 			return false;
 		}
