@@ -499,19 +499,6 @@ public class EnderPearlRevamp extends JavaPlugin
 	    }
 	}
 	
-	//// Error checking ////
-	
-	public boolean checkClass(String path)
-	{
-		try {
-			Class.forName( path );
-			return true;
-		} catch( Exception e ) {
-			scream(ChatColor.RED + "Class " + path + " does not exist! Plugin needs to be compiled with the latest CraftBukkit");
-			return false;
-		}
-	}
-	
 	//// Messaging and print stuff ////
 	
 	public void sendMessageTo(Player pl, String msg)
