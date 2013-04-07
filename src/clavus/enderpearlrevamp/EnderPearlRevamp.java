@@ -2,6 +2,7 @@ package clavus.enderpearlrevamp;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -20,8 +21,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.v1_4_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_4_R1.entity.CraftFirework;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -56,7 +55,6 @@ public class EnderPearlRevamp extends JavaPlugin
 	private boolean factionsEnabled;
 	private int savingTask;
 	private boolean playerDataChanged = false;
-	private boolean craftBukkitUpToDate = true;
 	private static Logger log;
 	
 	public EnderPearlRevamp()
@@ -97,8 +95,6 @@ public class EnderPearlRevamp extends JavaPlugin
 		if (factionsEnabled) {
 			print("Detected Factions " + factions.getDescription().getVersion() + "!");
 		}
-		
-		craftBukkitUpToDate = checkClass("org.bukkit.craftbukkit.v1_4_6.CraftWorld");
 	}
 	
 	public void onDisable() 
@@ -426,17 +422,20 @@ public class EnderPearlRevamp extends JavaPlugin
 		Firework fw = loc.getWorld().spawn(loc, Firework.class);
 		FireworkMeta fwm = fw.getFireworkMeta();
 		FireworkEffect effect = FireworkEffect.builder().withColor(Color.AQUA).with(FireworkEffect.Type.BALL).build();
+		fwm.clearEffects();
 		fwm.addEffects(effect);
-		fwm.setPower(0);
-		fw.setFireworkMeta(fwm);
+
+		try {
+			// Thank you ReplacedExplosions plugin for this piece of code :D
+			Field f = fwm.getClass().getDeclaredField("power");
+			f.setAccessible(true);
+			f.set(fwm, Integer.valueOf(-2));
+	    }
+	    catch (Exception e) {
+	    	e.printStackTrace();
+	    }
 		
-		if (craftBukkitUpToDate) {
-			// Firework effect
-			((CraftWorld) loc.getWorld()).getHandle().broadcastEntityEffect(
-	                ((CraftFirework) fw).getHandle(), (byte)17);
-			
-			fw.remove();
-		}
+		fw.setFireworkMeta(fwm);
 	}
 	
 	// drop an enderpearl on the given location

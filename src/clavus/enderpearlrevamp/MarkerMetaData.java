@@ -3,6 +3,7 @@ package clavus.enderpearlrevamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -29,9 +30,11 @@ public class MarkerMetaData
 		allowedData.put(Material.WOOD_DOUBLE_STEP, new ArrayList<String>(
 				Arrays.asList("oak %m", "spruce %m", "birch %m", "jungle %m")));
 		allowedData.put(Material.STEP, new ArrayList<String>(
-				Arrays.asList("stone %m", "sandstone %m", "wooden %m", "cobblestone %m", "brick %m", "stone brick %m", "nether brick %m")));
+				Arrays.asList("stone %m", "sandstone %m", "wooden %m", "cobblestone %m", "brick %m", "stone brick %m", "nether brick %m", "quartz %m")));
 		allowedData.put(Material.DOUBLE_STEP, new ArrayList<String>(
-				Arrays.asList("stone %m", "sandstone %m", "wooden %m", "cobblestone %m", "brick %m", "stone brick %m", "nether brick %m")));
+				Arrays.asList("stone %m", "sandstone %m", "wooden %m", "cobblestone %m", "brick %m", "stone brick %m", "nether brick %m", "quartz %m")));
+		allowedData.put(Material.QUARTZ_BLOCK, new ArrayList<String>(
+				Arrays.asList("%m", "chiseled %m", "pillar %m")));
 	}
 	
 	public static byte getUsableMetaData(int matId, byte metaData)
@@ -60,7 +63,9 @@ public class MarkerMetaData
 	{
 		if (allowedData.containsKey(mat)) {
 			metaData = getUsableMetaData(mat, metaData);
-			String format = allowedData.get(mat).get(metaData);
+			List<String> names = allowedData.get(mat);
+			if (names.size()-1 < metaData) { return name; }
+			String format = names.get(metaData);
 			if (format == null || format == "") { return name; }
 			else { return format.replace("%m", name); }
 		}
