@@ -35,9 +35,9 @@ import org.bukkit.util.Vector;
 
 import clavus.enderpearlrevamp.runnable.ParamRunnable;
 
-import com.massivecraft.factions.Board;
-import com.massivecraft.factions.FLocation;
-import com.massivecraft.factions.Faction;
+import com.massivecraft.factions.entity.BoardColls;
+import com.massivecraft.factions.entity.Faction;
+import com.massivecraft.mcore.ps.PS;
 
 public class EnderPearlRevamp extends JavaPlugin
 {
@@ -384,15 +384,13 @@ public class EnderPearlRevamp extends JavaPlugin
 	{
 		if (!factionsEnabled) { return true; }
 		
-		//FPlayer fpl = FPlayers.i.get(pl);
-		//Faction plf = fpl.getFaction();
-		Faction f = Board.getFactionAt(new FLocation(bl.getLocation()));
+		Faction f = BoardColls.get().getFactionAt(PS.valueOf(bl.getLocation()));
 		
-		if (f.isSafeZone() && !Settings.factionsAllowMarkingInSafezone) {
+		if (f.getName().toLowerCase().equals("safezone") && !Settings.factionsAllowMarkingInSafezone) {
 			sendMessageTo(pl, "Can't place marks in safezones!");
 			return false; 
 		}
-		if (f.isWarZone() && !Settings.factionsAllowMarkingInWarzone) {
+		if (f.getName().toLowerCase().equals("warzone") && !Settings.factionsAllowMarkingInWarzone) {
 			sendMessageTo(pl, "Can't place marks in warzones!");
 			return false;
 		}
